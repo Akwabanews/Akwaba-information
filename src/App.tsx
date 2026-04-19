@@ -2423,44 +2423,42 @@ export default function App() {
     const fetchData = async () => {
       try {
         const [cloudArticles, cloudEvents, cloudSettings, cloudComments, cloudSubs, cloudMedia, cloudClassifieds, cloudLiveBlogs] = await Promise.all([
-          FirestoreService.getArticles(),
-          FirestoreService.getEvents(),
-          FirestoreService.getSettings(),
-          FirestoreService.getAllComments(),
-          FirestoreService.getSubscribers(),
-          FirestoreService.getMediaLibrary(),
-          FirestoreService.getClassifieds(),
-          FirestoreService.getLiveBlogs()
+          FirestoreService.getArticles().catch(() => []),
+          FirestoreService.getEvents().catch(() => []),
+          FirestoreService.getSettings().catch(() => null),
+          FirestoreService.getAllComments().catch(() => []),
+          FirestoreService.getSubscribers().catch(() => []),
+          FirestoreService.getMediaLibrary().catch(() => []),
+          FirestoreService.getClassifieds().catch(() => []),
+          FirestoreService.getLiveBlogs().catch(() => [])
         ]);
         
-        if (cloudArticles.length > 0) setAdminArticles(cloudArticles);
-        if (cloudEvents.length > 0) setAdminEvents(cloudEvents);
+        if (cloudArticles && cloudArticles.length > 0) setAdminArticles(cloudArticles);
+        if (cloudEvents && cloudEvents.length > 0) setAdminEvents(cloudEvents);
         if (cloudSettings) setSiteSettings(cloudSettings);
-        setAllComments(cloudComments);
-        setSubscribers(cloudSubs);
-        setMediaLibrary(cloudMedia);
-        if (cloudClassifieds.length > 0) setClassifieds(cloudClassifieds);
-        if (cloudLiveBlogs.length > 0) setLiveBlogs(cloudLiveBlogs);
-        setIsCloudLoaded(true);
+        if (cloudComments) setAllComments(cloudComments);
+        if (cloudSubs) setSubscribers(cloudSubs);
+        if (cloudMedia) setMediaLibrary(cloudMedia);
+        if (cloudClassifieds && cloudClassifieds.length > 0) setClassifieds(cloudClassifieds);
+        if (cloudLiveBlogs && cloudLiveBlogs.length > 0) setLiveBlogs(cloudLiveBlogs);
       } catch (error: any) {
-        let isPermissionError = false;
-        try {
-          const parsed = JSON.parse(error.message);
-          if (parsed.error && parsed.operationType) isPermissionError = true;
-        } catch (e) {
-          isPermissionError = error.code === 'permission-denied' || error.message?.includes('insufficient permissions');
-        }
-
-        if (isPermissionError || error.message?.includes('offline')) {
-          console.log("Cloud Data: En attente de configuration Firebase ou de contenu initial.");
-        } else {
-          console.error("Error fetching cloud data:", error);
-        }
+        console.warn("Silent failure in data fetching, using cache/mocks:", error);
+      } finally {
+        setIsCloudLoaded(true);
       }
     };
     fetchData();
 
-    return () => unsubscribe();
+    // Safety fallback for auth and cloud loading
+    const safetyTimer = setTimeout(() => {
+      setIsAuthChecked(true);
+      setIsCloudLoaded(true);
+    }, 5000);
+
+    return () => {
+      unsubscribe();
+      clearTimeout(safetyTimer);
+    };
   }, []);
 
   const handleAdminLogin = async () => {
@@ -3023,9 +3021,21 @@ export default function App() {
       setTimeout(() => {
         setShowSplash(false);
         sessionStorage.setItem('akwaba_splash_shown', 'true');
-      }, 2000);
-    }, 1500);
-    return () => clearTimeout(timer);
+      }, 1000);
+    }, 2000);
+    
+    // Extreme safety
+    const forceExit = setTimeout(() => {
+      setShowSplash(false);
+      setIsLoading(false);
+      setIsAuthChecked(true);
+      setIsCloudLoaded(true);
+    }, 8000);
+
+    return () => {
+      clearTimeout(timer);
+      clearTimeout(forceExit);
+    };
   }, []);
 
    const categories = siteSettings.categories || ['À la une', 'Politique', 'Économie', 'Science', 'Santé', 'Culture', 'Histoire', 'Sport'];
