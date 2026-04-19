@@ -2118,11 +2118,21 @@ const LoginModal = ({ isOpen, onClose, onLogin, isDarkMode }: {
 
 export default function App() {
   const [currentView, setCurrentView] = useState<'home' | 'article' | 'search' | 'donate' | 'about' | 'privacy' | 'terms' | 'contact' | 'cookies' | 'event' | 'all-events' | 'admin' | 'admin-login' | 'webtv' | 'profile' | 'classifieds' | 'live-blog' | 'author-profile'>(() => {
-    const saved = localStorage.getItem('akwaba_current_view');
-    if (saved) return saved as any;
-    return 'home';
+    return (localStorage.getItem('akwaba_current_view') as any) || 'home';
   });
-  const [selectedArticle, setSelectedArticle] = useState<Article | null>(null);
+  const [selectedArticle, setSelectedArticle] = useState<Article | null>(() => {
+    const savedId = localStorage.getItem('akwaba_selected_article_id');
+    if (savedId) {
+      const savedArticles = localStorage.getItem('akwaba_admin_articles');
+      try {
+        const articles = savedArticles ? JSON.parse(savedArticles) : MOCK_ARTICLES;
+        return articles.find((a: Article) => a.id === savedId) || null;
+      } catch {
+        return MOCK_ARTICLES.find(a => a.id === savedId) || null;
+      }
+    }
+    return null;
+  });
   const [selectedAuthor, setSelectedAuthor] = useState<Author | null>(null);
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(() => {
     return localStorage.getItem('akwaba_is_admin') === 'true';
@@ -2222,6 +2232,31 @@ export default function App() {
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [showNotificationCenter, setShowNotificationCenter] = useState(false);
   const unreadNotifsCount = notifications.filter(n => !n.read).length;
+
+  // Persist important state
+  useEffect(() => {
+    localStorage.setItem('akwaba_current_view', currentView);
+  }, [currentView]);
+
+  useEffect(() => {
+    localStorage.setItem('akwaba_is_admin', isAdminAuthenticated.toString());
+  }, [isAdminAuthenticated]);
+
+  useEffect(() => {
+    localStorage.setItem('akwaba_admin_articles', JSON.stringify(adminArticles));
+  }, [adminArticles]);
+
+  useEffect(() => {
+    localStorage.setItem('akwaba_admin_events', JSON.stringify(adminEvents));
+  }, [adminEvents]);
+
+  useEffect(() => {
+    if (selectedArticle) {
+      localStorage.setItem('akwaba_selected_article_id', selectedArticle.id);
+    } else {
+      localStorage.removeItem('akwaba_selected_article_id');
+    }
+  }, [selectedArticle]);
 
   useEffect(() => {
     if (isAdminAuthenticated) {
@@ -2440,7 +2475,7 @@ export default function App() {
       const userEmail = user.email || (user.providerData && user.providerData[0]?.email);
 
       if (!userEmail) {
-        alert("Google n'a pas transmis votre adresse email. Veuillez réessayer ou vérifier que votre compte Google autorise le partage de l'email.");
+        alert("Google n'a pas transmis votre adresse email. Veuillez réessayer.");
         await auth.signOut();
         return;
       }
@@ -2452,7 +2487,7 @@ export default function App() {
         setCurrentView('admin');
         setActiveNotification("Connexion réussie !");
       } else {
-        alert(`Accès refusé : L'email ${user.email} n'est pas autorisé. \n\nVeuillez utiliser akwabanewsinfo@gmail.com.`);
+        alert(`Accès refusé : L'email ${userEmail} n'est pas autorisé.`);
         await auth.signOut();
       }
     } catch (error: any) {
@@ -2476,13 +2511,13 @@ export default function App() {
       if (art.image) FirestoreService.trackMedia(art.image, 'image');
       if (art.video) FirestoreService.trackMedia(art.video, 'video');
       
-      const isNew = !adminArticles.find(a => a.id === art.id);
-      if (isNew) {
-        setAdminArticles([art, ...adminArticles]);
-      } else {
-        setAdminArticles(adminArticles.map(a => a.id === art.id ? art : a));
-      }
+      setAdminArticles(prev => {
+        const isNew = !prev.find(a => a.id === art.id);
+        if (isNew) return [art, ...prev];
+        return prev.map(a => a.id === art.id ? art : a);
+      });
       setEditingArticle(null);
+      setActiveNotification("Article enregistré !");
     } catch (error) {
       console.error("Error saving article:", error);
       alert("Erreur lors de la sauvegarde sur le Cloud. Vérifiez vos permissions.");
@@ -2655,6 +2690,7 @@ export default function App() {
     try {
       await auth.signOut();
       setIsAdminAuthenticated(false);
+      localStorage.removeItem('akwaba_is_admin');
       setCurrentView('home');
     } catch (error) {
       console.error("Logout Error:", error);

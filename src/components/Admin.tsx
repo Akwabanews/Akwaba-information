@@ -285,6 +285,11 @@ export const AdminDashboard = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [tempSettings, setTempSettings] = useState<SiteSettings>(settings);
   const [newCategory, setNewCategory] = useState('');
+
+  // Sync tempSettings when props change
+  useEffect(() => {
+    setTempSettings(settings);
+  }, [settings]);
   const [alertTitle, setAlertTitle] = useState('');
   const [alertMessage, setAlertMessage] = useState('');
   const [alertTopic, setAlertTopic] = useState('Urgent');
@@ -938,10 +943,29 @@ export const AdminDashboard = ({
                         <span className="text-[10px] font-black uppercase text-slate-400">Vues Cumulées</span>
                       </div>
                     </div>
-                    <div className="space-y-6">
-                      {(stats?.categoryStats || (settings.categories || ['Afrique', 'Monde', 'Politique'])).map((item: any) => {
-                        const cat = typeof item === 'string' ? item : item.name;
-                        const catViews = typeof item === 'string' ? articles.filter(a => a.category === cat).reduce((acc, a) => acc + (a.views || 0), 0) : item.count;
+                   <div className="space-y-6">
+                      {stats?.categoryStats ? (
+                        Object.entries(stats.categoryStats).map(([cat, val]: [string, any]) => {
+                          const catViews = typeof val === 'number' ? val : (val as any).count || 0;
+                          const percentage = Math.min(100, (catViews / 5000) * 100);
+                          return (
+                            <div key={cat} className="space-y-2">
+                              <div className="flex justify-between text-xs font-black uppercase tracking-widest">
+                                <span>{cat}</span>
+                                <span>{catViews.toLocaleString()} vues</span>
+                              </div>
+                              <div className="h-3 bg-slate-100 rounded-full overflow-hidden">
+                                <motion.div 
+                                  initial={{ width: 0 }}
+                                  animate={{ width: `${percentage}%` }}
+                                  className="h-full bg-primary"
+                                />
+                              </div>
+                            </div>
+                          );
+                        })
+                      ) : (settings.categories || ['Afrique', 'Monde', 'Politique']).map((cat: string) => {
+                        const catViews = articles.filter(a => a.category === cat).reduce((acc, a) => acc + (a.views || 0), 0);
                         const percentage = Math.min(100, (catViews / 5000) * 100);
                         return (
                           <div key={cat} className="space-y-2">
@@ -1144,7 +1168,7 @@ export const AdminDashboard = ({
                       </button>
                       <button 
                         onClick={() => onDeleteArticle(article.id)}
-                        className="p-2 bg-slate-50 text-slate-400 rounded-lg hover:bg-red-50 hover:text-red-500 transition-all opacity-0 group-hover:opacity-100"
+                        className="p-2 bg-slate-50 text-slate-400 rounded-lg hover:bg-red-50 hover:text-red-500 transition-all opacity-70 lg:opacity-0 lg:group-hover:opacity-100"
                       >
                         <Trash size={16} />
                       </button>
@@ -1178,7 +1202,7 @@ export const AdminDashboard = ({
                       </button>
                       <button 
                         onClick={() => onDeleteEvent(event.id)}
-                        className="p-2 bg-slate-50 text-slate-400 rounded-lg hover:bg-red-50 hover:text-red-500 transition-all opacity-0 group-hover:opacity-100"
+                        className="p-2 bg-slate-50 text-slate-400 rounded-lg hover:bg-red-50 hover:text-red-500 transition-all opacity-70 lg:opacity-0 lg:group-hover:opacity-100"
                       >
                         <Trash size={16} />
                       </button>
