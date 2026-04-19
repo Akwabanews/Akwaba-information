@@ -307,9 +307,20 @@ export const AdminDashboard = ({
   const handleSave = async () => {
     if (!validate()) return;
     setIsSaving(true);
+    
+    // Sécurité : Réinitialiser isSaving après 15s si la promesse ne revient pas
+    const safetyTimer = setTimeout(() => {
+      setIsSaving(false);
+      alert("La sauvegarde prend plus de temps que prévu. Vérifiez votre connexion.");
+    }, 15000);
+
     try {
       await onSaveSettings(tempSettings);
+    } catch (e) {
+      console.error(e);
+      alert("Une erreur est survenue lors de la sauvegarde.");
     } finally {
+      clearTimeout(safetyTimer);
       setIsSaving(false);
     }
   };
@@ -576,10 +587,31 @@ export const AdminDashboard = ({
                   </div>
                   <div className="md:col-span-2 space-y-2">
                     <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Réseaux Sociaux</label>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <input type="text" placeholder="Facebook URL" className="bg-slate-50 rounded-xl px-4 py-3 text-base outline-none" value={tempSettings.facebookUrl} onChange={e => setTempSettings({...tempSettings, facebookUrl: e.target.value})} />
-                      <input type="text" placeholder="Twitter URL" className="bg-slate-50 rounded-xl px-4 py-3 text-base outline-none" value={tempSettings.twitterUrl} onChange={e => setTempSettings({...tempSettings, twitterUrl: e.target.value})} />
-                      <input type="text" placeholder="Instagram URL" className="bg-slate-50 rounded-xl px-4 py-3 text-base outline-none" value={tempSettings.instagramUrl} onChange={e => setTempSettings({...tempSettings, instagramUrl: e.target.value})} />
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      <div className="space-y-1">
+                        <label className="text-[9px] font-black uppercase text-slate-400 px-1">Facebook</label>
+                        <input type="text" placeholder="Facebook URL" className="w-full bg-slate-50 rounded-xl px-4 py-3 text-sm outline-none border border-slate-100 focus:border-primary/30" value={tempSettings.facebookUrl} onChange={e => setTempSettings({...tempSettings, facebookUrl: e.target.value})} />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[9px] font-black uppercase text-slate-400 px-1">X (Twitter)</label>
+                        <input type="text" placeholder="Twitter URL" className="w-full bg-slate-50 rounded-xl px-4 py-3 text-sm outline-none border border-slate-100 focus:border-primary/30" value={tempSettings.twitterUrl} onChange={e => setTempSettings({...tempSettings, twitterUrl: e.target.value})} />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[9px] font-black uppercase text-slate-400 px-1">Instagram</label>
+                        <input type="text" placeholder="Instagram URL" className="w-full bg-slate-50 rounded-xl px-4 py-3 text-sm outline-none border border-slate-100 focus:border-primary/30" value={tempSettings.instagramUrl} onChange={e => setTempSettings({...tempSettings, instagramUrl: e.target.value})} />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[9px] font-black uppercase text-slate-400 px-1">TikTok</label>
+                        <input type="text" placeholder="TikTok URL" className="w-full bg-slate-50 rounded-xl px-4 py-3 text-sm outline-none border border-slate-100 focus:border-primary/30" value={tempSettings.tiktokUrl} onChange={e => setTempSettings({...tempSettings, tiktokUrl: e.target.value})} />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[9px] font-black uppercase text-slate-400 px-1">LinkedIn</label>
+                        <input type="text" placeholder="LinkedIn URL" className="w-full bg-slate-50 rounded-xl px-4 py-3 text-sm outline-none border border-slate-100 focus:border-primary/30" value={tempSettings.linkedinUrl} onChange={e => setTempSettings({...tempSettings, linkedinUrl: e.target.value})} />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[9px] font-black uppercase text-slate-400 px-1">YouTube</label>
+                        <input type="text" placeholder="YouTube URL" className="w-full bg-slate-50 rounded-xl px-4 py-3 text-sm outline-none border border-slate-100 focus:border-primary/30" value={tempSettings.youtubeUrl} onChange={e => setTempSettings({...tempSettings, youtubeUrl: e.target.value})} />
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1406,9 +1438,20 @@ export const AdminEditor = ({
   const handleSave = async () => {
     if (!validate()) return;
     setIsSaving(true);
+
+    // Sécurité : Réinitialiser isSaving après 15s si la promesse ne revient pas
+    const safetyTimer = setTimeout(() => {
+      setIsSaving(false);
+      alert("L'enregistrement prend plus de temps que prévu. Vérifiez votre connexion.");
+    }, 15000);
+
     try {
       await onSave(formData);
+    } catch (e) {
+      console.error(e);
+      alert("Une erreur est survenue lors de l'enregistrement.");
     } finally {
+      clearTimeout(safetyTimer);
       setIsSaving(false);
     }
   };

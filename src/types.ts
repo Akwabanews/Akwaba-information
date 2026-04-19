@@ -125,6 +125,9 @@ export interface SiteSettings {
   facebookUrl?: string;
   twitterUrl?: string;
   instagramUrl?: string;
+  tiktokUrl?: string;
+  linkedinUrl?: string;
+  youtubeUrl?: string;
   // Ads
   adSlotHeader?: string;
   adSlotSidebar?: string;

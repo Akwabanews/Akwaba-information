@@ -46,6 +46,7 @@ import {
   AlertTriangle,
   MonitorOff,
   Youtube,
+  Music,
   Bookmark,
   Activity,
   Award,
@@ -2201,6 +2202,10 @@ export default function App() {
     address: "Abidjan, Côte d'Ivoire",
     facebookUrl: "https://facebook.com",
     twitterUrl: "https://twitter.com",
+    instagramUrl: "https://instagram.com",
+    tiktokUrl: "https://tiktok.com",
+    linkedinUrl: "https://linkedin.com",
+    youtubeUrl: "https://youtube.com",
     categories: ['À la une', 'Urgent', 'Politique', 'Économie', 'Science', 'Santé', 'Culture', 'Histoire', 'Sport', 'Afrique', 'Monde', 'Tech'],
     maintenanceMode: false,
     urgentBannerActive: false,
@@ -2565,7 +2570,6 @@ export default function App() {
       setSiteSettings(settings);
       setActiveNotification({ message: "Configuration mise à jour avec succès !", type: 'success' });
       setTimeout(() => setActiveNotification(null), 5000);
-      alert("Succès : Toute la configuration a été enregistrée sur le cloud.");
     } catch (error) {
       console.error("Error saving settings:", error);
       alert("Erreur fatale lors de la sauvegarde des paramètres. Vérifiez votre connexion.");
@@ -3030,7 +3034,7 @@ export default function App() {
       setIsLoading(false);
       setIsAuthChecked(true);
       setIsCloudLoaded(true);
-    }, 8000);
+    }, 4000);
 
     return () => {
       clearTimeout(timer);
@@ -5180,18 +5184,38 @@ Dernière mise à jour : Avril 2026
                 ? `${siteSettings.aboutText.substring(0, 197)}...` 
                 : siteSettings.aboutText}
             </p>
-            <div className="flex gap-4">
-              {siteSettings.twitterUrl && (
-                <a href={siteSettings.twitterUrl} target="_blank" rel="noopener noreferrer" className="p-2 bg-slate-100 rounded-full text-slate-600 hover:bg-primary hover:text-white transition-all">
-                  <Twitter size={20} />
-                </a>
-              )}
-              {siteSettings.facebookUrl && (
-                <a href={siteSettings.facebookUrl} target="_blank" rel="noopener noreferrer" className="p-2 bg-slate-100 rounded-full text-slate-600 hover:bg-primary hover:text-white transition-all">
-                  <Facebook size={20} />
-                </a>
-              )}
-            </div>
+              <div className="flex gap-4">
+                {siteSettings.twitterUrl && (
+                  <a href={siteSettings.twitterUrl} target="_blank" rel="noopener noreferrer" className="p-2 bg-slate-100 rounded-full text-slate-600 hover:bg-primary hover:text-white transition-all">
+                    <Twitter size={20} />
+                  </a>
+                )}
+                {siteSettings.facebookUrl && (
+                  <a href={siteSettings.facebookUrl} target="_blank" rel="noopener noreferrer" className="p-2 bg-slate-100 rounded-full text-slate-600 hover:bg-primary hover:text-white transition-all">
+                    <Facebook size={20} />
+                  </a>
+                )}
+                {siteSettings.instagramUrl && (
+                  <a href={siteSettings.instagramUrl} target="_blank" rel="noopener noreferrer" className="p-2 bg-slate-100 rounded-full text-slate-600 hover:bg-primary hover:text-white transition-all">
+                    <Instagram size={20} />
+                  </a>
+                )}
+                {siteSettings.tiktokUrl && (
+                  <a href={siteSettings.tiktokUrl} target="_blank" rel="noopener noreferrer" className="p-2 bg-slate-100 rounded-full text-slate-600 hover:bg-primary hover:text-white transition-all">
+                    <Music size={20} />
+                  </a>
+                )}
+                {siteSettings.linkedinUrl && (
+                  <a href={siteSettings.linkedinUrl} target="_blank" rel="noopener noreferrer" className="p-2 bg-slate-100 rounded-full text-slate-600 hover:bg-primary hover:text-white transition-all">
+                    <Linkedin size={20} />
+                  </a>
+                )}
+                {siteSettings.youtubeUrl && (
+                  <a href={siteSettings.youtubeUrl} target="_blank" rel="noopener noreferrer" className="p-2 bg-slate-100 rounded-full text-slate-600 hover:bg-primary hover:text-white transition-all">
+                    <Youtube size={20} />
+                  </a>
+                )}
+              </div>
           </div>
 
           <div className="space-y-6">
