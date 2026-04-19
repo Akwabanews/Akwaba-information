@@ -41,6 +41,7 @@ import {
   Settings,
   Copy,
   Check,
+  CheckCircle,
   ArrowRight,
   AlertTriangle,
   MonitorOff,
@@ -2192,7 +2193,7 @@ export default function App() {
   const [userFollowedCategories, setUserFollowedCategories] = useState<Set<string>>(new Set());
   const [userBadges, setUserBadges] = useState<string[]>([]);
   const [userPoints, setUserPoints] = useState(0);
-  const [activeNotification, setActiveNotification] = useState<string | null>(null);
+  const [activeNotification, setActiveNotification] = useState<string | {message: string, type: 'success' | 'urgent' | 'info'} | null>(null);
   const [siteSettings, setSiteSettings] = useState<SiteSettings>({
     aboutText: "Akwaba Info est votre source de référence pour l'actualité en Afrique et dans le monde.",
     email: "contact@akwabainfo.com",
@@ -2517,10 +2518,11 @@ export default function App() {
         return prev.map(a => a.id === art.id ? art : a);
       });
       setEditingArticle(null);
-      setActiveNotification("Article enregistré !");
+      setActiveNotification({ message: "Article enregistré avec succès !", type: 'success' });
+      setTimeout(() => setActiveNotification(null), 5000);
     } catch (error) {
       console.error("Error saving article:", error);
-      alert("Erreur lors de la sauvegarde sur le Cloud. Vérifiez vos permissions.");
+      alert("Erreur de permission ou de connexion lors de la sauvegarde.");
     }
   };
 
@@ -2528,9 +2530,12 @@ export default function App() {
     if (confirm('Êtes-vous sûr de vouloir supprimer cet article du Cloud ?')) {
       try {
         await FirestoreService.deleteArticle(id);
-        setAdminArticles(adminArticles.filter(a => a.id !== id));
+        setAdminArticles(prev => prev.filter(a => a.id !== id));
+        setActiveNotification({ message: "Article supprimé du Cloud.", type: 'info' });
+        setTimeout(() => setActiveNotification(null), 3000);
       } catch (error) {
         console.error("Error deleting article:", error);
+        alert("Impossible de supprimer l'article. Vérifiez vos droits.");
       }
     }
   };
@@ -2542,15 +2547,17 @@ export default function App() {
       if (ev.image) FirestoreService.trackMedia(ev.image, 'image');
       if (ev.video) FirestoreService.trackMedia(ev.video, 'video');
       
-      const isNew = !adminEvents.find(e => e.id === ev.id);
-      if (isNew) {
-        setAdminEvents([ev, ...adminEvents]);
-      } else {
-        setAdminEvents(adminEvents.map(e => e.id === ev.id ? ev : e));
-      }
+      setAdminEvents(prev => {
+        const isNew = !prev.find(e => e.id === ev.id);
+        if (isNew) return [ev, ...prev];
+        return prev.map(e => e.id === ev.id ? ev : e);
+      });
       setEditingEvent(null);
+      setActiveNotification({ message: "Événement enregistré avec succès !", type: 'success' });
+      setTimeout(() => setActiveNotification(null), 5000);
     } catch (error) {
       console.error("Error saving event:", error);
+      alert("Erreur lors de la sauvegarde de l'événement.");
     }
   };
 
@@ -2558,10 +2565,12 @@ export default function App() {
     try {
       await FirestoreService.saveSettings(settings);
       setSiteSettings(settings);
-      setActiveNotification("Paramètres mis à jour !");
+      setActiveNotification({ message: "Configuration mise à jour avec succès !", type: 'success' });
+      setTimeout(() => setActiveNotification(null), 5000);
+      alert("Succès : Toute la configuration a été enregistrée sur le cloud.");
     } catch (error) {
       console.error("Error saving settings:", error);
-      alert("Erreur lors de la sauvegarde des paramètres.");
+      alert("Erreur fatale lors de la sauvegarde des paramètres. Vérifiez votre connexion.");
     }
   };
 
@@ -2569,8 +2578,9 @@ export default function App() {
     if (confirm('Supprimer ce commentaire de façon permanente ?')) {
       try {
         await FirestoreService.deleteComment(id);
-        setAllComments(allComments.filter(c => c.id !== id));
-        setActiveNotification("Commentaire supprimé.");
+        setAllComments(prev => prev.filter(c => c.id !== id));
+        setActiveNotification({ message: "Commentaire supprimé.", type: 'info' });
+        setTimeout(() => setActiveNotification(null), 3000);
       } catch (error) {
         console.error("Error deleting comment:", error);
         alert("Erreur lors de la suppression.");
@@ -2582,9 +2592,12 @@ export default function App() {
     if (confirm('Êtes-vous sûr de vouloir supprimer cet événement du Cloud ?')) {
       try {
         await FirestoreService.deleteEvent(id);
-        setAdminEvents(adminEvents.filter(e => e.id !== id));
+        setAdminEvents(prev => prev.filter(e => e.id !== id));
+        setActiveNotification({ message: "Événement supprimé.", type: 'info' });
+        setTimeout(() => setActiveNotification(null), 3000);
       } catch (error) {
         console.error("Error deleting event:", error);
+        alert("Action impossible pour le moment.");
       }
     }
   };
@@ -3345,13 +3358,24 @@ export default function App() {
             exit={{ x: 400, opacity: 0 }}
             className="fixed top-24 right-6 z-[150] max-w-sm w-full"
           >
-            <div className="bg-red-600 text-white p-6 rounded-3xl shadow-2xl flex gap-4 items-start border-4 border-white/20">
+            <div className={cn(
+              "text-white p-6 rounded-3xl shadow-2xl flex gap-4 items-start border-4 border-white/20",
+              typeof activeNotification === 'object' && activeNotification.type === 'success' ? "bg-emerald-600" : 
+              typeof activeNotification === 'object' && activeNotification.type === 'urgent' ? "bg-red-600" : "bg-primary"
+            )}>
               <div className="p-2 bg-white/20 rounded-xl shrink-0">
-                <Bell size={24} />
+                {typeof activeNotification === 'object' && activeNotification.type === 'success' ? <CheckCircle size={24} /> : <Bell size={24} />}
               </div>
               <div className="flex-1 space-y-1">
-                <div className="text-[10px] font-black uppercase tracking-widest opacity-80">ALERTE URGENTE</div>
-                <p className="text-sm font-bold leading-tight">{activeNotification}</p>
+                <div className="text-[10px] font-black uppercase tracking-widest opacity-80">
+                  {typeof activeNotification === 'object' ? (
+                    activeNotification.type === 'success' ? 'Confirmation' : 
+                    activeNotification.type === 'urgent' ? 'Alerte Urgente' : 'Information'
+                  ) : 'Information'}
+                </div>
+                <p className="text-sm font-bold leading-tight">
+                  {typeof activeNotification === 'string' ? activeNotification : activeNotification.message}
+                </p>
               </div>
               <button onClick={() => setActiveNotification(null)} className="p-1 hover:bg-white/20 rounded-full transition-colors">
                 <X size={18} />

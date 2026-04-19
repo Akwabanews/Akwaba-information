@@ -285,11 +285,34 @@ export const AdminDashboard = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [tempSettings, setTempSettings] = useState<SiteSettings>(settings);
   const [newCategory, setNewCategory] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
 
   // Sync tempSettings when props change
   useEffect(() => {
     setTempSettings(settings);
   }, [settings]);
+
+  const validate = () => {
+    if (!tempSettings.email || !tempSettings.email.includes('@')) {
+      alert("Vérifiez l'adresse email de contact.");
+      return false;
+    }
+    if (!tempSettings.aboutText || tempSettings.aboutText.length < 10) {
+      alert("Le texte 'À propos' doit être rempli (min. 10 caractères).");
+      return false;
+    }
+    return true;
+  };
+
+  const handleSave = async () => {
+    if (!validate()) return;
+    setIsSaving(true);
+    try {
+      await onSaveSettings(tempSettings);
+    } finally {
+      setIsSaving(false);
+    }
+  };
   const [alertTitle, setAlertTitle] = useState('');
   const [alertMessage, setAlertMessage] = useState('');
   const [alertTopic, setAlertTopic] = useState('Urgent');
@@ -699,10 +722,23 @@ export const AdminDashboard = ({
 
               <div className="sticky bottom-4 z-10 flex justify-end">
                 <button 
-                  onClick={() => onSaveSettings(tempSettings)}
-                  className="bg-primary text-white font-black px-12 py-5 rounded-3xl hover:scale-105 transition-all shadow-2xl shadow-primary/40 flex items-center gap-3 border-4 border-white"
+                  onClick={handleSave}
+                  disabled={isSaving}
+                  className={cn(
+                    "bg-primary text-white font-black px-12 py-5 rounded-3xl hover:scale-105 transition-all shadow-2xl shadow-primary/40 flex items-center gap-3 border-4 border-white",
+                    isSaving && "opacity-70 cursor-not-allowed scale-100"
+                  )}
                 >
-                  <Save size={24} /> ENREGISTRER TOUTE LA CONFIGURATION
+                  {isSaving ? (
+                    <div className="flex items-center gap-3">
+                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      ENREGISTREMENT...
+                    </div>
+                  ) : (
+                    <>
+                      <Save size={24} /> ENREGISTRER TOUTE LA CONFIGURATION
+                    </>
+                  )}
                 </button>
               </div>
             </motion.div>
@@ -1349,6 +1385,33 @@ export const AdminEditor = ({
   });
   
   const [previewMode, setPreviewMode] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+
+  const validate = () => {
+    if (!formData.title || formData.title.length < 5) {
+      alert("Le titre est trop court (min. 5 caractères).");
+      return false;
+    }
+    if (!formData.content || formData.content.length < 20) {
+      alert("Le contenu est trop court (min. 20 caractères).");
+      return false;
+    }
+    if (type === 'event' && !formData.location) {
+      alert("Le lieu de l'événement est requis.");
+      return false;
+    }
+    return true;
+  };
+
+  const handleSave = async () => {
+    if (!validate()) return;
+    setIsSaving(true);
+    try {
+      await onSave(formData);
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   // Fallback if categories is empty
   const availableCategories = categories.length > 0 
@@ -1379,10 +1442,19 @@ export const AdminEditor = ({
             {previewMode ? "Éditer" : "Aperçu"}
           </button>
           <button 
-            onClick={() => onSave(formData)}
-            className="px-6 py-2 bg-primary text-white rounded-xl flex items-center gap-2 font-black shadow-lg shadow-primary/20 hover:scale-105 transition-all text-sm"
+            onClick={handleSave}
+            disabled={isSaving}
+            className={cn(
+              "px-6 py-2 bg-primary text-white rounded-xl flex items-center gap-2 font-black shadow-lg shadow-primary/20 hover:scale-105 transition-all text-sm",
+              isSaving && "opacity-70 cursor-not-allowed"
+            )}
           >
-            <Check size={18} /> Enregistrer {type === 'article' ? "l'article" : "l'événement"}
+            {isSaving ? (
+              <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            ) : (
+              <Check size={18} />
+            )}
+            {isSaving ? "Enregistrement..." : `Enregistrer ${type === 'article' ? "l'article" : "l'événement"}`}
           </button>
         </div>
       </div>
